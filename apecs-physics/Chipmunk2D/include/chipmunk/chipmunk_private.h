@@ -149,8 +149,8 @@ cpShapeFilterReject(cpShapeFilter a, cpShapeFilter b)
 		// They are in the same non-zero group.
 		(a.group != 0 && a.group == b.group) ||
 		// One of the category/mask combinations fails.
-		(a.categories & b.mask) == 0 ||
-		(b.categories & a.mask) == 0
+		(a.categories & b.mask) != a.categories ||
+		(b.categories & a.mask) != b.categories
 	);
 }
 
