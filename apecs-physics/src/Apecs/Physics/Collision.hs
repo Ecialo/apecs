@@ -32,7 +32,7 @@ import qualified Data.Vector.Unboxed as U
 import Foreign.ForeignPtr (withForeignPtr)
 import Foreign.Ptr
 import qualified Language.C.Inline as C
-import Linear.V2
+import Geomancy
 
 import Apecs.Physics.Body ()
 import Apecs.Physics.Space ()
@@ -53,7 +53,7 @@ mkCollision arb = do
   bb <- fromIntegral <$> [C.block| unsigned int { CP_ARBITER_GET_BODIES($(cpArbiter* arb), ba, bb); return (intptr_t) (bb->userData); } |]
   sa <- fromIntegral <$> [C.block| unsigned int { CP_ARBITER_GET_SHAPES($(cpArbiter* arb), sa, sb); return (intptr_t) (sa->userData); } |]
   sb <- fromIntegral <$> [C.block| unsigned int { CP_ARBITER_GET_SHAPES($(cpArbiter* arb), sa, sb); return (intptr_t) (sb->userData); } |]
-  return $ Collision (V2 nx ny) (Entity ba) (Entity bb) (Entity sa) (Entity sb)
+  return $ Collision (vec2 nx ny) (Entity ba) (Entity bb) (Entity sa) (Entity sb)
 
 mkBeginCB :: (MonadIO m) => (Collision -> SystemT w IO Bool) -> SystemT w m BeginCB
 mkBeginCB sys = do

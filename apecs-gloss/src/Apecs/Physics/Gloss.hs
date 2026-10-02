@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Apecs.Physics.Gloss
@@ -13,6 +14,7 @@ module Apecs.Physics.Gloss
 
 import Control.Monad (foldM)
 import Data.Semigroup (Semigroup (..))
+import Geomancy (Vec2, pattern WithVec2, withVec2)
 import Graphics.Gloss.Geometry.Angle (radToDeg)
 import Graphics.Gloss.Interface.IO.Simulate (simulateIO)
 
@@ -22,17 +24,17 @@ import Apecs.Physics
 import Apecs.Gloss
 
 convexToPicture :: Convex -> Picture
-convexToPicture (Convex [V2 x y] radius) = Translate (realToFrac x) (realToFrac y) $ Circle (realToFrac radius)
-convexToPicture (Convex [a, b] _) = Line [v2ToTuple a, v2ToTuple b]
-convexToPicture (Convex verts _) = Polygon (v2ToTuple <$> verts)
+convexToPicture (Convex [WithVec2 x y] radius) = Translate x y $ Circle (realToFrac radius)
+convexToPicture (Convex [a, b] _) = Line [vec2ToTuple a, vec2ToTuple b]
+convexToPicture (Convex verts _) = Polygon (map vec2ToTuple verts)
 
-v2ToTuple :: V2 Double -> (Float, Float)
-v2ToTuple (V2 x y) = (realToFrac x, realToFrac y)
+vec2ToTuple :: Vec2 -> (Float, Float)
+vec2ToTuple v = withVec2 v (,)
 
 type Transform = (Position, Angle)
 worldTransform :: Transform -> Picture -> Picture
-worldTransform (Position (V2 x y), Angle theta) =
-  Translate (realToFrac x) (realToFrac y)
+worldTransform (Position (WithVec2 x y), Angle theta) =
+  Translate x y
     . Rotate (negate . radToDeg . realToFrac $ theta)
 
 drawBody :: (Has w IO Physics) => (Body, Transform, ShapeList) -> System w Picture

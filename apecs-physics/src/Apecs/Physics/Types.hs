@@ -24,11 +24,12 @@ import qualified Data.Map as Map
 import qualified Foreign.C.Types as C
 import Foreign.ForeignPtr
 import Foreign.Ptr
+import Foreign.Storable
+import Geomancy (Vec2, withVec2)
 import Language.C.Inline
 import Language.C.Inline.Context
 import qualified Language.C.Types as C
 import qualified Language.Haskell.TH as TH
-import Linear.V2
 import Numeric (showIntAtBase)
 
 phycsCtx :: Context
@@ -47,15 +48,18 @@ phycsTypesTable =
     , (C.TypeName "cpShape", [t|Shape|])
     , (C.TypeName "cpPointQueryInfo", [t|PointQueryResult|])
     , (C.TypeName "cpSegmentQueryInfo", [t|SegmentQueryResult|])
-    , (C.TypeName "cpVect", [t|V2 C.CDouble|])
+    , (C.TypeName "cpVect", [t|CpVect|])
     , (C.TypeName "cpSpace", [t|FrnSpace|])
     ]
 
 -- | Uninhabited, should be added to the world as a component to add a physics space.
 data Physics
 
--- | Vector type used by the library
-type Vec = V2 Double
+-- | Vector type used by the library.
+--
+-- A single-precision @geomancy@ 'Vec2'; chipmunk computes in double
+-- precision, values are converted with 'realToFrac' at the FFI boundary.
+type Vec = Vec2
 
 -- | Type synonym indicating that a vector is expected to be in body-space coordinates
 type BVec = Vec
@@ -211,7 +215,25 @@ instance Show Bitmask where
   show (Bitmask mask) = "Bitmask 0b" ++ showIntAtBase 2 intToDigit mask ""
 
 data FrnSpace
-data FrnVec
+
+-- | Marshalling stand-in for chipmunk's @cpVect@ (a pair of C doubles).
+--
+-- 'Vec' is single precision while @cpVect@ is a pair of @cpFloat@ doubles,
+-- so this type exists only to cross the FFI boundary: inline-c maps
+-- @cpVect@ to it in 'phycsTypesTable', which is what lets @$vec-ptr@
+-- pass arrays of vertices to @cpPolyShapeNew@. Scalars are converted
+-- with 'realToFrac'; see 'vecToCpVect'.
+data CpVect = CpVect !C.CDouble !C.CDouble
+
+instance Storable CpVect where
+  sizeOf ~_ = 16
+  alignment ~_ = 8
+  peek p = CpVect <$> peekByteOff p 0 <*> peekByteOff p 8
+  poke p (CpVect x y) = pokeByteOff p 0 x >> pokeByteOff p 8 y
+
+-- | Convert a 'Vec' to the FFI-marshalling 'CpVect'.
+vecToCpVect :: Vec2 -> CpVect
+vecToCpVect v = withVec2 v $ \x y -> CpVect (realToFrac x) (realToFrac y)
 
 data Space c = Space
   { spBodies :: IOMap BodyRecord

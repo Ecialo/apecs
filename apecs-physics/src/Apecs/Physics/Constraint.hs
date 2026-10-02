@@ -28,7 +28,7 @@ import qualified Data.Vector.Unboxed as U
 import Foreign.ForeignPtr (withForeignPtr)
 import Foreign.Ptr
 import qualified Language.C.Inline as C
-import Linear.V2
+import Geomancy
 
 import Apecs.Physics.Space ()
 import Apecs.Physics.Types
@@ -43,7 +43,7 @@ newConstraint
   bodyA
   bodyB
   (fromIntegral -> ety)
-  (PinJoint (fmap realToFrac -> V2 ax ay) (fmap realToFrac -> V2 bx by)) =
+  (PinJoint (WithVec2 (realToFrac -> ax) (realToFrac -> ay)) (WithVec2 (realToFrac -> bx) (realToFrac -> by))) =
     withForeignPtr spacePtr $ \space ->
       [C.block| cpConstraint* {
     cpVect anchorA = cpv( $(double ax), $(double ay) );
@@ -57,7 +57,7 @@ newConstraint
   bodyA
   bodyB
   (fromIntegral -> ety)
-  (SlideJoint (fmap realToFrac -> V2 ax ay) (fmap realToFrac -> V2 bx by) (realToFrac -> min) (realToFrac -> max)) =
+  (SlideJoint (WithVec2 (realToFrac -> ax) (realToFrac -> ay)) (WithVec2 (realToFrac -> bx) (realToFrac -> by)) (realToFrac -> min) (realToFrac -> max)) =
     withForeignPtr spacePtr $ \space ->
       [C.block| cpConstraint* {
     cpVect anchorA = cpv( $(double ax), $(double ay) );
@@ -71,7 +71,7 @@ newConstraint
   bodyA
   bodyB
   (fromIntegral -> ety)
-  (PivotJoint (fmap realToFrac -> V2 x y)) =
+  (PivotJoint (WithVec2 (realToFrac -> x) (realToFrac -> y))) =
     withForeignPtr spacePtr $ \space ->
       [C.block| cpConstraint* {
     cpVect anchor = cpv( $(double x), $(double y) );
@@ -84,7 +84,7 @@ newConstraint
   bodyA
   bodyB
   (fromIntegral -> ety)
-  (PivotJoint2 (fmap realToFrac -> V2 ax ay) (fmap realToFrac -> V2 bx by)) =
+  (PivotJoint2 (WithVec2 (realToFrac -> ax) (realToFrac -> ay)) (WithVec2 (realToFrac -> bx) (realToFrac -> by))) =
     withForeignPtr spacePtr $ \space ->
       [C.block| cpConstraint* {
     cpVect va = cpv( $(double ax), $(double ay) );
@@ -98,7 +98,7 @@ newConstraint
   bodyA
   bodyB
   (fromIntegral -> ety)
-  (GrooveJoint (fmap realToFrac -> V2 ax ay) (fmap realToFrac -> V2 bx by) (fmap realToFrac -> V2 ancx ancy)) =
+  (GrooveJoint (WithVec2 (realToFrac -> ax) (realToFrac -> ay)) (WithVec2 (realToFrac -> bx) (realToFrac -> by)) (WithVec2 (realToFrac -> ancx) (realToFrac -> ancy))) =
     withForeignPtr spacePtr $ \space ->
       [C.block| cpConstraint* {
     cpVect va = cpv( $(double ax), $(double ay) );
@@ -113,7 +113,7 @@ newConstraint
   bodyA
   bodyB
   (fromIntegral -> ety)
-  (DampedSpring (fmap realToFrac -> V2 ax ay) (fmap realToFrac -> V2 bx by) (realToFrac -> rl) (realToFrac -> stf) (realToFrac -> damping)) =
+  (DampedSpring (WithVec2 (realToFrac -> ax) (realToFrac -> ay)) (WithVec2 (realToFrac -> bx) (realToFrac -> by)) (realToFrac -> rl) (realToFrac -> stf) (realToFrac -> damping)) =
     withForeignPtr spacePtr $ \space ->
       [C.block| cpConstraint* {
     cpVect va = cpv( $(double ax), $(double ay) );

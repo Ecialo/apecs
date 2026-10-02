@@ -1,3 +1,19 @@
+## [0.5.0]
+### Changed
+- **Breaking:** switched from `linear` to `geomancy`. `Vec` is now a
+  single-precision `Geomancy.Vec2` instead of `V2 Double`; all vector
+  components (`Position`, `Velocity`, `Gravity`, `Convex` vertices, ...)
+  hold `Vec2`. Scalar quantities (masses, angles, radii) remain `Double`,
+  values are converted with `realToFrac` at the chipmunk FFI boundary.
+- `Apecs.Physics` no longer re-exports `Linear.V2`; it re-exports the new
+  `Apecs.Physics.Vector` module instead, which provides the `geomancy` `Vec2`
+  toolkit (`vec2`, `withVec2`, `WithVec2`, `^*`, `dot`, `norm`, ...) plus
+  2D helpers replacing the ones previously inherited from `linear`:
+  `perp`, `angle`, `unangle`, `crossZ`, `ex`, `ey`.
+
+### Added
+- `Apecs.Physics.Vector` module
+
 ## [0.4.6]
 ### Changed
 - (#113) Ineffectual custom build removed from Setup.hs

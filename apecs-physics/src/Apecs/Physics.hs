@@ -78,12 +78,14 @@ module Apecs.Physics
   , module Apecs.Physics.Geometry
   , BVec
   , WVec
+  , Vec
+
+    -- * Vector toolkit
+  , module Apecs.Physics.Vector
   , module Apecs
-  , module Linear.V2
   ) where
 
 import Apecs
-import Linear.V2
 
 import Apecs.Physics.Body ()
 import Apecs.Physics.Collision
@@ -93,6 +95,7 @@ import Apecs.Physics.Query
 import Apecs.Physics.Shape
 import Apecs.Physics.Space
 import Apecs.Physics.Types
+import Apecs.Physics.Vector
 
 {- $BODY
 When you give an entity a @'Body'@ component in 'apecs-physics', the physics engine will

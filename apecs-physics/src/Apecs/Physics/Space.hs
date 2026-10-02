@@ -3,6 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -20,8 +21,8 @@ import Control.Monad.IO.Class (MonadIO)
 import Data.IORef
 import Foreign.Concurrent
 import Foreign.ForeignPtr (withForeignPtr)
+import Geomancy (vec2, pattern WithVec2)
 import qualified Language.C.Inline as C
-import Linear.V2
 
 import Apecs.Physics.Types
 
@@ -59,16 +60,16 @@ instance (MonadIO m) => ExplInit m (Space Physics) where
 
 -- Gravity
 earthGravity :: Gravity
-earthGravity = Gravity $ V2 0 (-9.81)
+earthGravity = Gravity $ vec2 0 (-9.81)
 
-getGravity :: SpacePtr -> IO (V2 Double)
+getGravity :: SpacePtr -> IO Vec
 getGravity spacePtr = withForeignPtr spacePtr $ \space -> do
   x <- [C.exp| double { cpSpaceGetGravity ($(cpSpace* space)).x } |]
   y <- [C.exp| double { cpSpaceGetGravity ($(cpSpace* space)).y } |]
-  return (V2 (realToFrac x) (realToFrac y))
+  return (vec2 (realToFrac x) (realToFrac y))
 
-setGravity :: SpacePtr -> V2 Double -> IO ()
-setGravity spacePtr (V2 (realToFrac -> x) (realToFrac -> y)) = withForeignPtr spacePtr $ \space ->
+setGravity :: SpacePtr -> Vec -> IO ()
+setGravity spacePtr (WithVec2 (realToFrac -> x) (realToFrac -> y)) = withForeignPtr spacePtr $ \space ->
   [C.block| void {
   const cpVect vec = { $(double x), $(double y) };
   cpSpaceSetGravity($(cpSpace* space), vec);

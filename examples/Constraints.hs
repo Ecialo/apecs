@@ -9,6 +9,7 @@ import Apecs.Physics as P
 import Apecs.Physics.Gloss
 import Apecs.Util
 import Control.Monad
+import Linear.V2 (V2 (..))
 
 data MouseBody = MouseBody
 instance Component MouseBody where
@@ -27,7 +28,7 @@ initialize = do
     , earthGravity
     )
 
-  let gridLines' = gridLines (V2 4 3) 4 3
+  let gridLines' = gridLines (vec2 4 3) 4 3
 
   grid <- newEntity StaticBody
   forM_ gridLines' $ \gline ->
@@ -38,8 +39,8 @@ initialize = do
         newEntity (Shape ball (cCircle 0.1))
         return ball
 
-  springA <- mkBall $ Position (V2 (-1.5) 1)
-  springB <- mkBall $ Position (V2 (-1.7) 1)
+  springA <- mkBall $ Position (vec2 (-1.5) 1)
+  springB <- mkBall $ Position (vec2 (-1.7) 1)
   newEntity $ Constraint springA springB (DampedSpring 0 0 0.3 3 1e-4)
 
   let mkBox pos = do
@@ -47,48 +48,49 @@ initialize = do
         newEntity (Shape box (oRectangle 0 0.2))
         return box
 
-  pinA <- mkBox $ Position (V2 (-0.55) 1)
-  pinB <- mkBox $ Position (V2 (-0.3) 1)
-  newEntity $ Constraint pinA pinB (PinJoint (V2 0.2 0.2) (V2 0 0.2))
+  pinA <- mkBox $ Position (vec2 (-0.55) 1)
+  pinB <- mkBox $ Position (vec2 (-0.3) 1)
+  newEntity $ Constraint pinA pinB (PinJoint (vec2 0.2 0.2) (vec2 0 0.2))
 
-  slideA <- mkBox $ Position (V2 0.75 1)
-  slideB <- mkBox $ Position (V2 0.5 1)
-  newEntity $ Constraint slideA slideB (SlideJoint (V2 0.2 0.2) (V2 0 0.2) 0 0.1)
+  slideA <- mkBox $ Position (vec2 0.75 1)
+  slideB <- mkBox $ Position (vec2 0.5 1)
+  newEntity $ Constraint slideA slideB (SlideJoint (vec2 0.2 0.2) (vec2 0 0.2) 0 0.1)
 
-  pivotA <- mkBox $ Position (V2 1.1 1)
-  pivotB <- mkBox $ Position (V2 1.3 1)
-  pivotC <- mkBox $ Position (V2 1.5 1)
-  newEntity $ Constraint pivotA pivotB (PivotJoint (V2 1.3 1))
-  newEntity $ Constraint pivotB pivotC (PivotJoint (V2 1.5 1))
+  pivotA <- mkBox $ Position (vec2 1.1 1)
+  pivotB <- mkBox $ Position (vec2 1.3 1)
+  pivotC <- mkBox $ Position (vec2 1.5 1)
+  newEntity $ Constraint pivotA pivotB (PivotJoint (vec2 1.3 1))
+  newEntity $ Constraint pivotB pivotC (PivotJoint (vec2 1.5 1))
 
   let mkPaddle (Position pos) = do
         paddle <- newEntity (DynamicBody, Position pos)
-        newEntity $ Shape paddle (cRectangle (V2 0.06 0.4))
+        newEntity $ Shape paddle (cRectangle (vec2 0.06 0.4))
         newEntity $ Constraint paddle grid (PivotJoint pos)
         return paddle
 
-  gearA <- mkPaddle $ Position (V2 (-1.25) 0)
-  gearB <- mkPaddle $ Position (V2 (-1.75) 0)
+  gearA <- mkPaddle $ Position (vec2 (-1.25) 0)
+  gearB <- mkPaddle $ Position (vec2 (-1.75) 0)
   newEntity $ Constraint gearA gearB (GearJoint 0 3)
 
-  drsA <- mkPaddle $ Position (V2 (-0.25) 0)
-  drsB <- mkPaddle $ Position (V2 (-0.75) 0)
+  drsA <- mkPaddle $ Position (vec2 (-0.25) 0)
+  drsB <- mkPaddle $ Position (vec2 (-0.75) 0)
   newEntity $ Constraint drsA drsB (DampedRotarySpring 0 1e-2 1e-4)
 
-  rlA <- mkPaddle $ Position (V2 0.25 0)
-  rlB <- mkPaddle $ Position (V2 0.75 0)
+  rlA <- mkPaddle $ Position (vec2 0.25 0)
+  rlB <- mkPaddle $ Position (vec2 0.75 0)
   newEntity (Constraint rlA rlB (RotaryLimitJoint 0 1))
 
-  motA <- mkPaddle $ Position (V2 1.25 0)
-  motB <- mkPaddle $ Position (V2 1.75 0)
+  motA <- mkPaddle $ Position (vec2 1.25 0)
+  motB <- mkPaddle $ Position (vec2 1.75 0)
   newEntity (Constraint motA motB (SimpleMotor pi))
 
   cmap $ \(_ :: Shape) -> material
 
-mousePos :: (Float, Float) -> System World (V2 Double)
+mousePos :: (Float, Float) -> System World Vec
 mousePos mouseWin = do
   cam <- get global
-  return . fmap realToFrac $ windowToWorld cam mouseWin
+  return $ case windowToWorld cam mouseWin of
+    V2 x y -> vec2 x y
 
 handle :: Event -> System World ()
 handle (EventMotion mouseWin) = do

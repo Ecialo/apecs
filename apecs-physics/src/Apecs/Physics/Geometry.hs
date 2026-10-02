@@ -1,7 +1,7 @@
 module Apecs.Physics.Geometry where
 
 import Apecs.Physics.Types
-import Linear
+import Geomancy
 
 vertices :: Convex -> [BVec]
 vertices (Convex s _) = s
@@ -28,8 +28,8 @@ oCircle :: BVec -> Double -> Convex
 oCircle o r = Convex [o] r
 
 hLine, vLine :: Double -> Convex
-hLine l = Convex [V2 (-l / 2) 0, V2 (l / 2) 0] 0
-vLine l = Convex [V2 0 (l / 2), V2 0 (-l / 2)] 0
+hLine l = Convex [vec2 (realToFrac (-l / 2)) 0, vec2 (realToFrac (l / 2)) 0] 0
+vLine l = Convex [vec2 0 (realToFrac (l / 2)), vec2 0 (realToFrac (-l / 2))] 0
 
 -- | Centered rectangle with a given size
 cRectangle :: BVec -> Convex
@@ -37,7 +37,8 @@ cRectangle s = oRectangle (-s * 0.5) s
 
 -- | Rectangle with a given origin and size
 oRectangle :: BVec -> BVec -> Convex
-oRectangle (V2 x y) (V2 w h) = Convex [V2 x y, V2 x (y + h), V2 (x + w) (y + h), V2 (x + w) y] 0
+oRectangle (WithVec2 x y) (WithVec2 w h) =
+  Convex [vec2 x y, vec2 x (y + h), vec2 (x + w) (y + h), vec2 (x + w) y] 0
 
 -- | Rectangle with origin 0 and given size
 zRectangle :: BVec -> Convex
@@ -52,11 +53,11 @@ toEdges (Convex vs r) = zipWith (\h t -> Convex [h, t] r) vs (tail . cycle $ vs)
 -- | A set of lines forming a grid. Returns (r + c + 2) segments.
 gridLines :: Vec -> Int -> Int -> [Convex]
 gridLines size c r =
-  [shift (V2 x 0) (vLine h) | x <- xs]
-    ++ [shift (V2 0 y) (hLine w) | y <- ys]
+  [shift (vec2 x 0) (vLine (realToFrac h)) | x <- xs]
+    ++ [shift (vec2 0 y) (hLine (realToFrac w)) | y <- ys]
   where
-    V2 w h = size
-    V2 x y = -size * 0.5
+    WithVec2 w h = size
+    WithVec2 x y = -size * 0.5
     dx = w / fromIntegral c
     dy = h / fromIntegral r
     xs = [x + fromIntegral n * dx | n <- [0 .. c]]

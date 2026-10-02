@@ -26,7 +26,7 @@ import qualified Data.Vector.Unboxed as U
 import Foreign.ForeignPtr (withForeignPtr)
 import Foreign.Ptr
 import qualified Language.C.Inline as C
-import Linear.V2
+import Geomancy
 
 import Apecs.Physics.Constraint ()
 import Apecs.Physics.Shape ()
@@ -98,14 +98,14 @@ instance (MonadIO m) => ExplGet m (Space Body) where
     return b
 
 -- Position
-getPosition :: Ptr Body -> IO (V2 Double)
+getPosition :: Ptr Body -> IO Vec
 getPosition bodyPtr = do
   x <- [C.exp| double { cpBodyGetPosition ($(cpBody* bodyPtr)).x } |]
   y <- [C.exp| double { cpBodyGetPosition ($(cpBody* bodyPtr)).y } |]
-  return (V2 (realToFrac x) (realToFrac y))
+  return (vec2 (realToFrac x) (realToFrac y))
 
-setPosition :: Ptr Body -> V2 Double -> IO ()
-setPosition bodyPtr (V2 (realToFrac -> x) (realToFrac -> y)) =
+setPosition :: Ptr Body -> Vec -> IO ()
+setPosition bodyPtr (WithVec2 (realToFrac -> x) (realToFrac -> y)) =
   [C.block| void {
   const cpVect pos = { $(double x), $(double y) };
   cpBody *body = $(cpBody* bodyPtr);
@@ -135,14 +135,14 @@ instance (MonadIO m) => ExplGet m (Space Position) where
     Position <$> getPosition b
 
 -- Velocity
-getVelocity :: Ptr Body -> IO (V2 Double)
+getVelocity :: Ptr Body -> IO Vec
 getVelocity bodyPtr = do
   x <- [C.exp| double { cpBodyGetVelocity ($(cpBody* bodyPtr)).x } |]
   y <- [C.exp| double { cpBodyGetVelocity ($(cpBody* bodyPtr)).y } |]
-  return (V2 (realToFrac x) (realToFrac y))
+  return (vec2 (realToFrac x) (realToFrac y))
 
-setVelocity :: Ptr Body -> V2 Double -> IO ()
-setVelocity bodyPtr (V2 (realToFrac -> x) (realToFrac -> y)) =
+setVelocity :: Ptr Body -> Vec -> IO ()
+setVelocity bodyPtr (WithVec2 (realToFrac -> x) (realToFrac -> y)) =
   [C.block| void {
   const cpVect vel = { $(double x), $(double y) };
   cpBodySetVelocity($(cpBody* bodyPtr), vel);
@@ -243,14 +243,14 @@ instance (MonadIO m) => ExplGet m (Space AngularVelocity) where
     AngularVelocity <$> getAngularVelocity b
 
 -- Force
-getForce :: Ptr Body -> IO (V2 Double)
+getForce :: Ptr Body -> IO Vec
 getForce bodyPtr = do
   x <- [C.exp| double { cpBodyGetForce ($(cpBody* bodyPtr)).x } |]
   y <- [C.exp| double { cpBodyGetForce ($(cpBody* bodyPtr)).y } |]
-  return (V2 (realToFrac x) (realToFrac y))
+  return (vec2 (realToFrac x) (realToFrac y))
 
-setForce :: Ptr Body -> V2 Double -> IO ()
-setForce bodyPtr (V2 (realToFrac -> x) (realToFrac -> y)) =
+setForce :: Ptr Body -> Vec -> IO ()
+setForce bodyPtr (WithVec2 (realToFrac -> x) (realToFrac -> y)) =
   [C.block| void {
   const cpVect frc = { $(double x), $(double y) };
   cpBodySetForce($(cpBody* bodyPtr), frc);
@@ -285,8 +285,8 @@ applyForceAtLocalPoint bodyPtr force bPos =
   cpBodyApplyForceAtLocalPoint($(cpBody* bodyPtr), frc, pos);
   } |]
   where
-    V2 (realToFrac -> fx) (realToFrac -> fy) = force
-    V2 (realToFrac -> px) (realToFrac -> py) = bPos
+    WithVec2 (realToFrac -> fx) (realToFrac -> fy) = force
+    WithVec2 (realToFrac -> px) (realToFrac -> py) = bPos
 
 instance Component LocalForce where
   type Storage LocalForce = Space LocalForce
@@ -308,8 +308,8 @@ applyForceAtWorldPoint bodyPtr force wPos =
   cpBodyApplyForceAtWorldPoint($(cpBody* bodyPtr), frc, pos);
   } |]
   where
-    V2 (realToFrac -> fx) (realToFrac -> fy) = force
-    V2 (realToFrac -> px) (realToFrac -> py) = wPos
+    WithVec2 (realToFrac -> fx) (realToFrac -> fy) = force
+    WithVec2 (realToFrac -> px) (realToFrac -> py) = wPos
 
 instance Component WorldForce where
   type Storage WorldForce = Space WorldForce
@@ -434,14 +434,14 @@ instance (MonadIO m) => ExplGet m (Space Torque) where
     Torque <$> getTorque b
 
 -- CenterOfGravity
-getCenterOfGravity :: Ptr Body -> IO (V2 Double)
+getCenterOfGravity :: Ptr Body -> IO Vec
 getCenterOfGravity bodyPtr = do
   x <- [C.exp| double { cpBodyGetCenterOfGravity ($(cpBody* bodyPtr)).x } |]
   y <- [C.exp| double { cpBodyGetCenterOfGravity ($(cpBody* bodyPtr)).y } |]
-  return (V2 (realToFrac x) (realToFrac y))
+  return (vec2 (realToFrac x) (realToFrac y))
 
-setCenterOfGravity :: Ptr Body -> V2 Double -> IO ()
-setCenterOfGravity bodyPtr (V2 (realToFrac -> x) (realToFrac -> y)) =
+setCenterOfGravity :: Ptr Body -> Vec -> IO ()
+setCenterOfGravity bodyPtr (WithVec2 (realToFrac -> x) (realToFrac -> y)) =
   [C.block| void {
   const cpVect vel = { $(double x), $(double y) };
   cpBodySetCenterOfGravity($(cpBody* bodyPtr), vel);

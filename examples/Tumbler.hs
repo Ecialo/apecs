@@ -34,7 +34,7 @@ initialize = do
     y <- liftIO $ randomRIO (-2, 2)
     r <- liftIO $ randomRIO (0.1, 0.2)
     let c = (realToFrac x + 2) / 3
-    ball <- newEntity (DynamicBody, Position (V2 x y))
+    ball <- newEntity (DynamicBody, Position (vec2 x y))
     newEntity (Shape ball (cCircle r), Density 1)
 
 disp = InWindow "Tumbler" (640, 640) (10, 10)

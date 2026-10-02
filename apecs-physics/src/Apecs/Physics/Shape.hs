@@ -24,7 +24,7 @@ import qualified Data.Vector.Unboxed as U
 import Foreign.ForeignPtr
 import Foreign.Ptr
 import qualified Language.C.Inline as C
-import Linear.V2
+import Geomancy
 
 import Apecs.Physics.Space ()
 import Apecs.Physics.Types
@@ -47,13 +47,13 @@ defaultFilter = CollisionFilter 0 maskAll maskAll
 boxShape :: Double -> Double -> Vec -> Convex
 boxShape w h offset = Convex ((+ offset) <$> verts) 0
   where
-    w' = w / 2
-    h' = h / 2
+    w' = realToFrac (w / 2) :: Float
+    h' = realToFrac (h / 2) :: Float
     verts =
-      [ V2 (-w') (-h')
-      , V2 (-w') h'
-      , V2 w' h'
-      , V2 w' (-h')
+      [ vec2 (-w') (-h')
+      , vec2 (-w') h'
+      , vec2 w' h'
+      , vec2 w' (-h')
       ]
 
 instance Component Shape where
@@ -93,7 +93,7 @@ instance (MonadIO m) => ExplGet m (Space Shape) where
 newShape :: SpacePtr -> Ptr Body -> Convex -> Int -> IO (Ptr Shape)
 newShape spacePtr' bodyPtr shape (fromIntegral -> ety) = withForeignPtr spacePtr' (go shape)
   where
-    go (Convex [fmap realToFrac -> V2 x y] (realToFrac -> radius)) spacePtr =
+    go (Convex [WithVec2 (realToFrac -> x) (realToFrac -> y)] (realToFrac -> radius)) spacePtr =
       [C.block| cpShape* {
       const cpVect vec = { $(double x), $(double y) };
       cpShape* sh = cpCircleShapeNew($(cpBody* bodyPtr), $(double radius), vec);
@@ -101,8 +101,8 @@ newShape spacePtr' bodyPtr shape (fromIntegral -> ety) = withForeignPtr spacePtr
       return cpSpaceAddShape( $(cpSpace* spacePtr), sh); } |]
     go
       ( Convex
-          [ fmap realToFrac -> V2 xa ya
-            , fmap realToFrac -> V2 xb yb
+          [ WithVec2 (realToFrac -> xa) (realToFrac -> ya)
+            , WithVec2 (realToFrac -> xb) (realToFrac -> yb)
             ]
           (realToFrac -> radius)
         )
@@ -115,11 +115,11 @@ newShape spacePtr' bodyPtr shape (fromIntegral -> ety) = withForeignPtr spacePtr
        return cpSpaceAddShape( $(cpSpace* spacePtr), sh); } |]
     go
       ( Convex
-          ((fmap . fmap) realToFrac -> verts)
+          verts
           (realToFrac -> radius)
         )
       spacePtr = liftIO $ do
-        vec <- V.thaw (V.fromList verts)
+        vec <- V.thaw (V.fromList (map vecToCpVect verts))
         [C.block| cpShape* {
            cpTransform trans = cpTransformIdentity;
            cpShape* sh = cpPolyShapeNew($(cpBody* bodyPtr), $vec-len:vec, $vec-ptr:(cpVect *vec), trans, $(double radius));
@@ -293,10 +293,10 @@ getSurfaceVelocity :: Ptr Shape -> IO Vec
 getSurfaceVelocity shape = do
   x <- [C.exp| double { cpShapeGetSurfaceVelocity($(cpShape* shape)).x }|]
   y <- [C.exp| double { cpShapeGetSurfaceVelocity($(cpShape* shape)).y }|]
-  return (V2 (realToFrac x) (realToFrac y))
+  return (vec2 (realToFrac x) (realToFrac y))
 
 setSurfaceVelocity :: Ptr Shape -> Vec -> IO ()
-setSurfaceVelocity shape (V2 (realToFrac -> x) (realToFrac -> y)) =
+setSurfaceVelocity shape (WithVec2 (realToFrac -> x) (realToFrac -> y)) =
   [C.block| void {
   const cpVect vec = { $(double x), $(double y) };
   cpShapeSetSurfaceVelocity($(cpShape* shape), vec);

@@ -23,7 +23,7 @@ import Foreign.Marshal.Alloc
 import Foreign.Ptr
 import Foreign.Storable
 import qualified Language.C.Inline as C
-import Linear.V2
+import Geomancy
 
 import Apecs.Physics.Space ()
 import Apecs.Physics.Types
@@ -35,7 +35,7 @@ C.include "<chipmunk.h>"
 -- cpShape *cpSpacePointQueryNearest(cpSpace *space, cpVect point, cpFloat maxDistance, cpShapeFilter filter, cpPointQueryInfo *out)
 
 pointQuery :: (MonadIO m, Has w m Physics) => WVec -> Double -> CollisionFilter -> SystemT w m (Maybe PointQueryResult)
-pointQuery (fmap realToFrac -> V2 px py) (realToFrac -> maxDistance) (CollisionFilter gr (Bitmask cs) (Bitmask mk)) = do
+pointQuery (WithVec2 (realToFrac -> px) (realToFrac -> py)) (realToFrac -> maxDistance) (CollisionFilter gr (Bitmask cs) (Bitmask mk)) = do
   Space _ _ _ _ spcPtr :: Space Physics <- getStore
   liftIO $ alloca $ \pq -> do
     withForeignPtr spcPtr $ \space ->
@@ -54,7 +54,7 @@ pointQuery (fmap realToFrac -> V2 px py) (realToFrac -> maxDistance) (CollisionF
       return (Just res)
 
 instance Storable PointQueryResult where
-  sizeOf ~_ = 48 -- sizeOf (undefined :: Ptr Shape) + sizeOf (undefined :: CDouble) + 2*sizeOf (undefined :: V2 CDouble)
+  sizeOf ~_ = 48 -- sizeOf (undefined :: Ptr Shape) + sizeOf (undefined :: CDouble) + 2*sizeOf (undefined :: CDouble)
   alignment ~_ = 8
   peek ptr = do
     sPtr :: Ptr Shape <- peekByteOff ptr 0
@@ -66,10 +66,14 @@ instance Storable PointQueryResult where
             } else {
               return (intptr_t) cpShapeGetUserData(shape);
             } }|]
-    p :: V2 CDouble <- peekByteOff ptr 8
-    d :: CDouble <- peekByteOff ptr 24
-    g :: V2 CDouble <- peekByteOff ptr 32
-    return $ PointQueryResult (Entity . fromIntegral $ s) (realToFrac <$> p) (realToFrac d) (realToFrac <$> g)
+    px :: CDouble <- peekByteOff ptr 8 -- cpPointQueryInfo.point.x
+    py :: CDouble <- peekByteOff ptr 16 -- cpPointQueryInfo.point.y
+    d :: CDouble <- peekByteOff ptr 24 -- cpPointQueryInfo.distance
+    gx :: CDouble <- peekByteOff ptr 32 -- cpPointQueryInfo.gradient.x
+    gy :: CDouble <- peekByteOff ptr 40 -- cpPointQueryInfo.gradient.y
+    let p = vec2 (realToFrac px) (realToFrac py)
+        g = vec2 (realToFrac gx) (realToFrac gy)
+    return $ PointQueryResult (Entity . fromIntegral $ s) p (realToFrac d) g
   poke = undefined
 
 -- cpBool cpShapeSegmentQuery(cpShape *shape, cpVect a, cpVect b, cpFloat radius, cpSegmentQueryInfo *info)
@@ -79,7 +83,7 @@ instance Storable PointQueryResult where
 find the first shape that intersects with the line segment (ignoring sensor shapes).
 -}
 segmentQuery :: (MonadIO m, Has w m Physics) => WVec -> WVec -> Double -> CollisionFilter -> SystemT w m (Maybe SegmentQueryResult)
-segmentQuery (fmap realToFrac -> V2 sx sy) (fmap realToFrac -> V2 ex ey) (realToFrac -> radius) (CollisionFilter gr (Bitmask cs) (Bitmask mk)) = do
+segmentQuery (WithVec2 (realToFrac -> sx) (realToFrac -> sy)) (WithVec2 (realToFrac -> ex) (realToFrac -> ey)) (realToFrac -> radius) (CollisionFilter gr (Bitmask cs) (Bitmask mk)) = do
   Space _ _ _ _ spcPtr :: Space Physics <- getStore
   liftIO $ alloca $ \sq -> do
     withForeignPtr spcPtr $ \space ->
@@ -99,7 +103,7 @@ segmentQuery (fmap realToFrac -> V2 sx sy) (fmap realToFrac -> V2 ex ey) (realTo
       return (Just res)
 
 instance Storable SegmentQueryResult where
-  sizeOf ~_ = 48 -- sizeOf (undefined :: Ptr Shape) + 2*sizeOf (undefined :: V2 CDouble) + sizeOf (undefined :: CDouble)
+  sizeOf ~_ = 48 -- sizeOf (undefined :: Ptr Shape) + 2*sizeOf (undefined :: CDouble) + sizeOf (undefined :: CDouble)
   alignment ~_ = 8
   peek ptr = do
     sPtr :: Ptr Shape <- peekByteOff ptr 0
@@ -111,8 +115,12 @@ instance Storable SegmentQueryResult where
             } else {
               return (intptr_t) cpShapeGetUserData(shape);
             } }|]
-    p :: V2 CDouble <- peekByteOff ptr 8
-    n :: V2 CDouble <- peekByteOff ptr 24
-    a :: CDouble <- peekByteOff ptr 40
-    return $ SegmentQueryResult (Entity . fromIntegral $ s) (realToFrac <$> p) (realToFrac <$> n) (realToFrac a)
+    px :: CDouble <- peekByteOff ptr 8 -- cpSegmentQueryInfo.point.x
+    py :: CDouble <- peekByteOff ptr 16 -- cpSegmentQueryInfo.point.y
+    nx :: CDouble <- peekByteOff ptr 24 -- cpSegmentQueryInfo.normal.x
+    ny :: CDouble <- peekByteOff ptr 32 -- cpSegmentQueryInfo.normal.y
+    a :: CDouble <- peekByteOff ptr 40 -- cpSegmentQueryInfo.alpha
+    let p = vec2 (realToFrac px) (realToFrac py)
+        n = vec2 (realToFrac nx) (realToFrac ny)
+    return $ SegmentQueryResult (Entity . fromIntegral $ s) p n (realToFrac a)
   poke = undefined

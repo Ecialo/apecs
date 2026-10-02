@@ -1,6 +1,15 @@
 # GHC 9.12.2, same snapshot as the slumber engine (../slumber/stack.yaml)
 resolver: nightly-2025-08-12
 
+extra-deps:
+  # Same pins as slumber's stack.yaml, so the fork builds against the exact
+  # geomancy the engine uses
+  - geomancy-0.2.6.0@sha256:5b47feb19c1ff051a3b1f4feefbc03c09fc6585f89e3b69d6f3b47ad15253dc4,2332
+  - gl-block-1.0@sha256:4b098e98a8c8b566cb583c6c105eeafe6be80f7f4a0f687f4d8781841acce8e4,1762
+  - ptrdiff-0@sha256:0aef162233f5dcf64bd6993e4df4769c31df693e0002c797fb06998df2fae10e,843
+  - git: https://github.com/ivanperez-keera/simple-affine-space.git
+    commit: 38626fc8af4145d4ec4b9f5d64167518bac5ce20
+
 packages:
   - apecs
   - apecs-physics

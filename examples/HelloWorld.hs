@@ -3,6 +3,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 import Apecs.Physics
+import Linear.V2 (V2 (..))
 import Apecs.Physics.Gloss
 import Control.Monad
 
@@ -18,7 +19,7 @@ initialize = do
   lineBody <- newEntity (StaticBody, Angle (-pi / 20))
   newEntity (Shape lineBody (hLine 6), Elasticity 0.9)
 
-  ball <- newEntity (DynamicBody, Position (V2 0 3))
+  ball <- newEntity (DynamicBody, Position (vec2 0 3))
   newEntity (Shape ball (cCircle 0.5), Density 1, Elasticity 0.9)
 
 disp = InWindow "Hello World" (640, 640) (10, 10)
