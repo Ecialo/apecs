@@ -7,3 +7,8 @@ packages:
 
 package apecs
   tests: True
+
+package apecs-stm
+  tests: True
+
+allow-newer: containers

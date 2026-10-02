@@ -21,7 +21,7 @@ extra-source-files:
 
 source-repository HEAD
   type:     git
-  location: git://github.com/jonascarpay/apecs.git
+  location: https://github.com/jonascarpay/apecs
 
 flag release
   description:
@@ -45,13 +45,13 @@ library
     Apecs.Physics.Types
 
   build-depends:
-      apecs             >=0.7  && <0.10
-    , base              >=4.9  && <5
-    , containers        >=0.5  && <0.8
+      apecs             >=0.7  && <0.11
+    , base >=4.9 && <5
+    , containers
     , inline-c          >=0.6  && <1
     , linear            >=1.20 && <2
-    , template-haskell  >=2.12 && <3
-    , vector            >=0.10 && <0.14
+    , template-haskell
+    , vector
 
   ghc-options:
     -Wall -O2 -Wno-orphans -Wno-unused-do-bind -Wno-name-shadowing

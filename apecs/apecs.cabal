@@ -1,5 +1,5 @@
 name:               apecs
-version:            0.9.6
+version:            0.10.1
 homepage:           https://github.com/jonascarpay/apecs#readme
 license:            BSD3
 license-file:       LICENSE
@@ -18,7 +18,7 @@ extra-source-files:
 
 source-repository head
   type:     git
-  location: git://github.com/jonascarpay/apecs.git
+  location: https://github.com/jonascarpay/apecs
 
 library
   hs-source-dirs:   src
@@ -29,24 +29,30 @@ library
     Apecs.Experimental.Components
     Apecs.Experimental.Children
     Apecs.Experimental.Reactive
+    Apecs.Experimental.Reload
     Apecs.Experimental.Stores
     Apecs.Experimental.Util
     Apecs.Stores
+    Apecs.Stores.Internal
     Apecs.System
+    Apecs.Tags
     Apecs.TH
+    Apecs.TH.Tags
     Apecs.Util
 
-  other-modules:    Apecs.THTuples
+  other-modules:
+    Apecs.THTuples
+
   default-language: Haskell2010
   build-depends:
       array             >=0.4    && <0.6
     , base              >=4.9    && <5
-    , containers        >=0.5    && <0.8
-    , exceptions        >=0.10.0 && <0.11
-    , mtl               >=2.2    && <2.4
+    , containers        >=0.5    && <0.9
+    , transformers      >=0.5    && <0.7
     , template-haskell  >=2.12   && <3
-    , unliftio-core     >=0.2.0.1 && <0.3
+    , foreign-store     >=0.2    && <0.3
     , vector            >=0.11   && <0.14
+    , primitive         >=0.1    && <0.10
 
   ghc-options:      -Wall
 
@@ -56,11 +62,12 @@ test-suite apecs-test
   hs-source-dirs:   test
   build-depends:
       apecs
-    , base        >=4.9  && <5
-    , containers  >=0.5  && <0.8
+    , base
+    , containers
     , linear      >=1.20 && <2
     , QuickCheck  >=2.10 && <3
-    , vector      >=0.10 && <0.14
+    , vector
+    , vector-th-unbox >= 0.2  && < 0.3
 
   default-language: Haskell2010
   ghc-options:      -Wall
@@ -71,9 +78,11 @@ benchmark apecs-bench
   main-is:          Main.hs
   build-depends:
       apecs
-    , base       >=4.9  && <5
+    , base
     , criterion  >=1.3  && <2
+    , deepseq    >=1.4  && <2
     , linear     >=1.20 && <2
+    , vector-th-unbox >= 0.2  && < 0.3
 
   default-language: Haskell2010
   ghc-options:
